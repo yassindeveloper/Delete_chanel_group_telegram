@@ -33,15 +33,10 @@ https://wa.me/9647830528876
 git clone https://github.com/yassindeveloper/Delete_chanel_group_telegram.git
 cd Delete_chanel_group_telegram
 
-```bash
+
   pip install -r requirements.txt
 
-```bash
 Python main.py
-
-
----
-
 اختر اللغة (عربي / English).
 
 أدخل API_ID وAPI_HASH ورقم هاتفك.
@@ -53,6 +48,8 @@ Python main.py
 اختر ما إذا كنت تريد مغادرة الكل أو تحديد بعضها.
 
 راقب التقدم والنتيجة النهائية
+
+
 
 
 ---
