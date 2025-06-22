@@ -36,4 +36,4 @@ cd Delete_chanel_group_telegram
 
   pip install -r requirements.txt
 
-Python main.py
+python main.py
