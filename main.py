@@ -1,7 +1,6 @@
 import os
-import sys
 import asyncio
-from telethon.sync import TelegramClient
+from telethon import TelegramClient
 from telethon.sessions import StringSession
 from telethon.tl.functions.channels import LeaveChannelRequest
 from telethon.errors import FloodWaitError, SessionPasswordNeededError
@@ -12,14 +11,11 @@ from rich.console import Console
 from rich.table import Table
 from rich.prompt import Prompt, Confirm
 from rich.panel import Panel
-from rich.spinner import Spinner
 from rich.progress import Progress, SpinnerColumn, TextColumn
-from rich.text import Text
 from rich.rule import Rule
 from rich import box
 
 console = Console()
-
 
 LANGS = {
     "en": {
@@ -75,12 +71,14 @@ async def main():
     console.print(Panel.fit(L["banner"], title="Yassin CLI", style="bold cyan"))
     console.print(Rule(f"[bold yellow]{L['auth']}[/]"))
 
+    api_id = None
+    api_hash = None
+    phone = None
+
     if not os.path.exists("session.session"):
         api_id = Prompt.ask(f"[bold yellow]{L['api_id']}[/]")
         api_hash = Prompt.ask(f"[bold yellow]{L['api_hash']}[/]")
         phone = Prompt.ask(f"[bold yellow]{L['phone']}[/]")
-    else:
-        api_id = api_hash = phone = None
 
     client = await connect_client(L, api_id, api_hash, phone)
     if not client:
@@ -98,7 +96,7 @@ async def main():
     console.print(Rule("[bold green]Selection / التحديد[/]"))
 
     if Confirm.ask(f"[bold yellow]{L['leave_all']}[/]"):
-        selected = index_map.values()
+        selected = list(index_map.values())
     else:
         selection = Prompt.ask(f"[bold yellow]{L['leave_selected']}[/]")
         nums = [x.strip() for x in selection.split(',')]
@@ -149,9 +147,15 @@ async def fetch_chats(client, L):
         for i, dialog in enumerate(dialogs):
             entity = dialog.entity
             if isinstance(entity, (Channel, Chat)) and not isinstance(entity, ChatForbidden):
-                chat_type = "Channel" if entity.broadcast else "Group"
-                chats.append((i+1, entity.id, entity.title, chat_type))
-                index_map[str(i+1)] = entity
+                if isinstance(entity, Channel):
+                    chat_type = "Channel" if entity.broadcast else "Group"
+                elif isinstance(entity, Chat):
+                    chat_type = "Group"
+                else:
+                    continue
+
+                chats.append((i + 1, entity.id, entity.title, chat_type))
+                index_map[str(i + 1)] = entity
 
     return chats, index_map
 
@@ -183,8 +187,10 @@ async def leave_selected_chats(client, selected, L):
                 console.print(f"{L['left']}[green]{chat.title}[/]")
                 left_count += 1
             except FloodWaitError as e:
+                console.print(f"[yellow]FloodWait: waiting {e.seconds} seconds...[/]")
                 await asyncio.sleep(e.seconds)
                 await client(LeaveChannelRequest(chat))
+                console.print(f"{L['left']}[green]{chat.title}[/]")
                 left_count += 1
             except Exception as e:
                 console.print(f"{L['fail']}[red]{chat.title}[/] - {e}")
@@ -198,4 +204,4 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        console.print(f"\n[red]{LANGS['en']['cancel']}[/]")  
+        console.print(f"\n[red]{LANGS['en']['cancel']}[/]")
